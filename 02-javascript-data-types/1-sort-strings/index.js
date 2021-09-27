@@ -16,10 +16,10 @@ export function sortStrings(arr, param = "asc") {
 
   // Inner state
   const arrClone = arr.slice();
-  const availableSortDirections = ["asc", "desc"];
+  const AVAILABLE_SORT_DIRECTIONS = ["asc", "desc"];
 
   // Guard expression #2
-  if (!availableSortDirections.includes(param)) {
+  if (!AVAILABLE_SORT_DIRECTIONS.includes(param)) {
     // throw new Error('Unknown sorting param:', param)
     console.error("Unknown sort direction:", param);
     param = "asc";
