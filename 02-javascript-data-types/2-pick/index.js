@@ -6,7 +6,7 @@
  */
 export const pick = (obj, ...fields) => {
   return fields.reduce((acc, f) => {
-    if (f in obj) acc[f] = obj[f];
+    if (obj.hasOwnProperty(f)) acc[f] = obj[f];
     return acc;
   }, {});
 };
