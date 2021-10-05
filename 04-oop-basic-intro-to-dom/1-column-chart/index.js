@@ -40,9 +40,9 @@ export default class ColumnChart {
   }
 
   update(newData) {
-    if (isEmpty(newData)) this.element.classList.add(this.#classNames.loading);
+    if (isEmpty(newData)) this._toggleLoader(true);
     else {
-      this._toggleLoader(true);
+      this._toggleLoader(false);
       this.chartBody.innerHTML = this.#getColumnProps(newData)
         .map(this.#chartColumnGen)
         .join("");
