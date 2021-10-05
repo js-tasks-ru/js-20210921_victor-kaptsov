@@ -1,16 +1,16 @@
-const classNames = {
-  element: "column-chart",
-  loading: "column-chart_loading",
-  label: "column-chart__title",
-  link: "column-chart__link",
-  container: "column-chart__container",
-  header: "column-chart__header",
-  chartBody: "column-chart__chart",
-};
-
 export default class ColumnChart {
-  element = document.createElement("article");
+  element;
   chartHeight = 50;
+
+  #classNames = {
+    element: "column-chart",
+    loading: "column-chart_loading",
+    label: "column-chart__title",
+    link: "column-chart__link",
+    container: "column-chart__container",
+    header: "column-chart__header",
+    chartBody: "column-chart__chart",
+  };
 
   constructor({
     data = [],
@@ -19,54 +19,34 @@ export default class ColumnChart {
     value = 0,
     formatHeading = (x) => x,
   } = {}) {
-    this.element.classList.add(classNames.element);
-    this.element.setAttribute("style", `--chart-height: ${this.chartHeight}`);
+    this.getIntermediateHTMLString = this.#chartTemplateGen({
+      isLoading: isEmpty(data),
+      chartHeight: this.chartHeight,
+      labelText: label,
+      linkText: "View All",
+      linkHref: link,
+      value: formatHeading(value),
+    });
 
-    this.labelEl = document.createElement("header");
-    this.labelEl.classList.add(classNames.label);
+    const chartColumns = this.#getColumnProps(data)
+      .map(this.#chartColumnGen)
+      .join("");
+    const finalHtmlString = this.getIntermediateHTMLString(chartColumns);
 
-    if (label) {
-      const labelText = document.createTextNode(label);
-      this.labelEl.append(labelText);
-    }
-
-    if (link) {
-      const linkEl = document.createElement("a");
-      linkEl.textContent = "View All";
-      linkEl.href = link;
-      linkEl.classList.add(classNames.link);
-      this.labelEl.append(linkEl);
-    }
-
-    this.element.append(this.labelEl);
-
-    this.chartContainer = document.createElement("section");
-    this.chartContainer.classList.add(classNames.container);
-
-    this.chartHeader = document.createElement("header");
-    this.chartHeader.classList.add(classNames.header);
-    this.chartHeader.dataset.element = "header";
-    this.chartHeader.textContent = formatHeading(value);
-    this.chartContainer.append(this.chartHeader);
-
-    this.chartBody = document.createElement("div");
-    this.chartBody.classList.add(classNames.chartBody);
-    this.chartBody.dataset.element = "body";
-    this.chartContainer.append(this.chartBody);
-
-    if (data.length > 0)
-      fillWithChartColumns(this.chartBody, data, this.chartHeight);
-    else this.element.classList.add(classNames.loading);
-
-    this.element.append(this.chartContainer);
+    this.element = htmlToElement(finalHtmlString);
+    this.chartBody = this.element.querySelector(
+      "." + this.#classNames.chartBody
+    );
   }
 
   update(newData) {
-    if (newData.length > 0) {
-      this.element.classList.remove(classNames.loading);
+    if (isEmpty(newData)) this.element.classList.add(this.#classNames.loading);
+    else {
+      this._toggleLoader(true);
+      this.chartBody.innerHTML = this.#getColumnProps(newData)
+        .map(this.#chartColumnGen)
+        .join("");
     }
-    this.chartBody.innerHTML = "";
-    fillWithChartColumns(this.chartBody, newData, this.chartHeight);
   }
 
   remove() {
@@ -76,25 +56,73 @@ export default class ColumnChart {
   destroy() {
     this.remove();
   }
+
+  _toggleLoader(enable) {
+    if (enable) this.element.classList.add(this.#classNames.loading);
+    else this.element.classList.remove(this.#classNames.loading);
+  }
+
+  #chartTemplateGen =
+    ({
+      isLoading = true,
+      chartHeight = 50,
+      labelText = "",
+      linkText = "",
+      linkHref = "",
+      value = "",
+    }) =>
+    (chartColumns) => {
+      const elementClasses = isLoading
+        ? this.#classNames.element + " " + this.#classNames.loading
+        : this.#classNames.element;
+
+      const linkTag = linkHref
+        ? `<a href="${linkHref}" class="${
+            this.#classNames.link
+          }">${linkText}</a>`
+        : ``;
+
+      return `
+        <div class="${elementClasses}" style="--chart-height: ${chartHeight}">
+          <div class="${this.#classNames.label}">
+            ${labelText}
+            ${linkTag}
+          </div>
+          <div class="${this.#classNames.container}">
+            <div data-element="header" class="${
+              this.#classNames.header
+            }">${value}</div>
+            <div data-element="body" class="${this.#classNames.chartBody}">
+              ${chartColumns}
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+  #chartColumnGen = ({ value, percent }) =>
+    `<div style="--value: ${value}" data-tooltip="${percent}%"></div>`;
+
+  #getColumnProps = (data) => {
+    const maxValue = Math.max(...data);
+    const scale = this.chartHeight / maxValue;
+
+    return data.map((item) => ({
+      value: String(Math.floor(item * scale)),
+      percent: ((item / maxValue) * 100).toFixed(0),
+    }));
+  };
 }
 
-function getColumnProps(height, data) {
-  const maxValue = Math.max(...data);
-  const scale = height / maxValue;
-
-  return data.map((item) => ({
-    value: String(Math.floor(item * scale)),
-    percent: ((item / maxValue) * 100).toFixed(0),
-  }));
+function htmlToElement(html) {
+  // const template = document.createElement("template");
+  // template.innerHTML = html.trim();
+  // return template.content.firstChild;
+  const div = document.createElement("div");
+  div.insertAdjacentHTML("afterbegin", html.trim());
+  return div.firstChild;
 }
 
-function generateColumn({ value, percent }) {
-  const chartLine = document.createElement("div");
-  chartLine.style.setProperty("--value", value);
-  chartLine.dataset.tooltip = percent + "%";
-  return chartLine;
-}
-
-function fillWithChartColumns(container, data, height) {
-  container.append(...getColumnProps(height, data).map(generateColumn));
+function isEmpty(data) {
+  return data.length === 0;
 }
