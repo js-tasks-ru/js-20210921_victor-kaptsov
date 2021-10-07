@@ -1,5 +1,6 @@
 export default class ColumnChart {
   element;
+  chartBody;
   chartHeight = 50;
 
   #classNames = {
@@ -19,7 +20,7 @@ export default class ColumnChart {
     value = 0,
     formatHeading = (x) => x,
   } = {}) {
-    this.getIntermediateHTMLString = this.#chartTemplateGen({
+    this.getFinalHTMLString = this.#chartTemplateGenerator({
       isLoading: isEmpty(data),
       chartHeight: this.chartHeight,
       labelText: label,
@@ -28,10 +29,8 @@ export default class ColumnChart {
       value: formatHeading(value),
     });
 
-    const chartColumns = this.#getColumnProps(data)
-      .map(this.#chartColumnGen)
-      .join("");
-    const finalHtmlString = this.getIntermediateHTMLString(chartColumns);
+    const chartColumns = this.#chartBodyGenerator(data);
+    const finalHtmlString = this.getFinalHTMLString(chartColumns);
 
     this.element = htmlToElement(finalHtmlString);
     this.chartBody = this.element.querySelector(
@@ -43,9 +42,7 @@ export default class ColumnChart {
     if (isEmpty(newData)) this._toggleLoader(true);
     else {
       this._toggleLoader(false);
-      this.chartBody.innerHTML = this.#getColumnProps(newData)
-        .map(this.#chartColumnGen)
-        .join("");
+      this.chartBody.innerHTML = this.#chartBodyGenerator(newData);
     }
   }
 
@@ -57,12 +54,7 @@ export default class ColumnChart {
     this.remove();
   }
 
-  _toggleLoader(enable) {
-    if (enable) this.element.classList.add(this.#classNames.loading);
-    else this.element.classList.remove(this.#classNames.loading);
-  }
-
-  #chartTemplateGen =
+  #chartTemplateGenerator =
     ({
       isLoading = true,
       chartHeight = 50,
@@ -100,6 +92,9 @@ export default class ColumnChart {
       `;
     };
 
+  #chartBodyGenerator = (data) =>
+    this.#getColumnProps(data).map(this.#chartColumnGen).join("");
+
   #chartColumnGen = ({ value, percent }) =>
     `<div style="--value: ${value}" data-tooltip="${percent}%"></div>`;
 
@@ -112,6 +107,11 @@ export default class ColumnChart {
       percent: ((item / maxValue) * 100).toFixed(0),
     }));
   };
+
+  _toggleLoader(enable) {
+    if (enable) this.element.classList.add(this.#classNames.loading);
+    else this.element.classList.remove(this.#classNames.loading);
+  }
 }
 
 function htmlToElement(html) {
