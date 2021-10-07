@@ -47,11 +47,13 @@ export default class ColumnChart {
   }
 
   remove() {
-    this.element.remove();
+    if (this.element) this.element.remove();
   }
 
   destroy() {
     this.remove();
+    this.element = null;
+    this.chartBody = null;
   }
 
   #chartTemplateGenerator =
