@@ -92,11 +92,11 @@ export default class ColumnChart {
       `;
     };
 
-  #chartBodyGenerator = (data) =>
-    this.#getColumnProps(data).map(this.#chartColumnGen).join("");
-
-  #chartColumnGen = ({ value, percent }) =>
+  #chartColumnGenerator = ({ value, percent }) =>
     `<div style="--value: ${value}" data-tooltip="${percent}%"></div>`;
+
+  #chartBodyGenerator = (data) =>
+    this.#getColumnProps(data).map(this.#chartColumnGenerator).join("");
 
   #getColumnProps = (data) => {
     const maxValue = Math.max(...data);
