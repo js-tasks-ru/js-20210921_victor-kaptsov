@@ -1,5 +1,6 @@
 export default class ColumnChart {
   element;
+  chartBaseFn;
   chartBody;
   chartHeight = 50;
 
@@ -20,22 +21,40 @@ export default class ColumnChart {
     value = 0,
     formatHeading = (x) => x,
   } = {}) {
-    this.getFinalHTMLString = this.#chartTemplateGenerator({
-      isLoading: isEmpty(data),
+    this.data = data;
+    this.label = label;
+    this.link = link;
+    this.value = formatHeading(value);
+
+    this.render();
+  }
+
+  render() {
+    this.chartBaseFn = this.#chartTemplateGenerator({
+      isLoading: isEmpty(this.data),
       chartHeight: this.chartHeight,
-      labelText: label,
+      labelText: this.label,
       linkText: "View All",
-      linkHref: link,
-      value: formatHeading(value),
+      linkHref: this.link,
+      value: this.value,
     });
 
-    const chartColumns = this.#chartBodyGenerator(data);
-    const finalHtmlString = this.getFinalHTMLString(chartColumns);
+    const chartColumns = this.#chartBodyGenerator(this.data);
 
-    this.element = htmlToElement(finalHtmlString);
+    const chartTemplateStr = composeChartTemplate(
+      this.chartBaseFn,
+      chartColumns
+    );
+
+    this.element = htmlToElement(chartTemplateStr);
+
     this.chartBody = this.element.querySelector(
       "." + this.#classNames.chartBody
     );
+
+    function composeChartTemplate(chartBaseFn, chartColumns) {
+      return chartBaseFn(chartColumns);
+    }
   }
 
   update(newData) {
@@ -94,9 +113,6 @@ export default class ColumnChart {
       `;
     };
 
-  #chartColumnGenerator = ({ value, percent }) =>
-    `<div style="--value: ${value}" data-tooltip="${percent}%"></div>`;
-
   #chartBodyGenerator = (data) =>
     this.#getColumnProps(data).map(this.#chartColumnGenerator).join("");
 
@@ -110,11 +126,16 @@ export default class ColumnChart {
     }));
   };
 
+  #chartColumnGenerator = ({ value, percent }) =>
+    `<div style="--value: ${value}" data-tooltip="${percent}%"></div>`;
+
   _toggleLoader(enable) {
     if (enable) this.element.classList.add(this.#classNames.loading);
     else this.element.classList.remove(this.#classNames.loading);
   }
 }
+
+// NOTE: next functions should be in separate utilities file:
 
 function htmlToElement(html) {
   // const template = document.createElement("template");
