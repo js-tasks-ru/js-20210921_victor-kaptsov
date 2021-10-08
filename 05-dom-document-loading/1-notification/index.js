@@ -37,38 +37,31 @@ export default class NotificationMessage {
   }
 
   render() {
-    debugger;
     this.element = htmlToElement(this.template);
   }
 
   show(targetEl) {
-    debugger;
     if (NotificationMessage.isShown) {
       NotificationMessage.activeNotification.hide();
     }
     if (targetEl) targetEl.append(this.element);
     else document.body.append(this.element);
     this.timer = setTimeout(() => this.hide(), this.duration);
-    debugger;
 
     NotificationMessage.activeNotification = this;
     NotificationMessage.isShown = true;
   }
 
   hide() {
-    debugger;
     this.destroy();
     NotificationMessage.activeNotification = null;
     NotificationMessage.isShown = false;
-    debugger;
   }
 
   destroy() {
-    debugger;
     this.remove();
     this.element = null;
     if (this.timer) {
-      debugger;
       clearTimeout(this.timer);
       this.timer = null;
     }
