@@ -1,6 +1,5 @@
 export default class ColumnChart {
   element;
-  chartBaseFn;
   chartBody;
   chartHeight = 50;
 
@@ -30,31 +29,22 @@ export default class ColumnChart {
   }
 
   render() {
-    this.chartBaseFn = this.#chartTemplateGenerator({
+    const chartColumns = this.#chartBodyGenerator(this.data);
+
+    const chartTemplateStr = this.#chartTemplateGenerator({
       isLoading: isEmpty(this.data),
       chartHeight: this.chartHeight,
       labelText: this.label,
       linkText: "View All",
       linkHref: this.link,
       value: this.value,
+      chartColumns,
     });
 
-    const chartColumns = this.#chartBodyGenerator(this.data);
-
-    const chartTemplateStr = composeChartTemplate(
-      this.chartBaseFn,
-      chartColumns
-    );
-
     this.element = htmlToElement(chartTemplateStr);
-
     this.chartBody = this.element.querySelector(
       "." + this.#classNames.chartBody
     );
-
-    function composeChartTemplate(chartBaseFn, chartColumns) {
-      return chartBaseFn(chartColumns);
-    }
   }
 
   update(newData) {
@@ -75,27 +65,24 @@ export default class ColumnChart {
     this.chartBody = null;
   }
 
-  #chartTemplateGenerator =
-    ({
-      isLoading = true,
-      chartHeight = 50,
-      labelText = "",
-      linkText = "",
-      linkHref = "",
-      value = "",
-    }) =>
-    (chartColumns) => {
-      const elementClasses = isLoading
-        ? this.#classNames.element + " " + this.#classNames.loading
-        : this.#classNames.element;
+  #chartTemplateGenerator = ({
+    isLoading = true,
+    chartHeight = 50,
+    labelText = "",
+    linkText = "",
+    linkHref = "",
+    value = "",
+    chartColumns,
+  }) => {
+    const elementClasses = isLoading
+      ? this.#classNames.element + " " + this.#classNames.loading
+      : this.#classNames.element;
 
-      const linkTag = linkHref
-        ? `<a href="${linkHref}" class="${
-            this.#classNames.link
-          }">${linkText}</a>`
-        : ``;
+    const linkTag = linkHref
+      ? `<a href="${linkHref}" class="${this.#classNames.link}">${linkText}</a>`
+      : ``;
 
-      return `
+    return `
         <div class="${elementClasses}" style="--chart-height: ${chartHeight}">
           <div class="${this.#classNames.label}">
             ${labelText}
@@ -111,7 +98,7 @@ export default class ColumnChart {
           </div>
         </div>
       `;
-    };
+  };
 
   #chartBodyGenerator = (data) =>
     this.#getColumnProps(data).map(this.#chartColumnGenerator).join("");
