@@ -1,9 +1,8 @@
 export default class NotificationMessage {
-  static isShown;
   static activeNotification;
 
   element;
-  timer;
+  timerId;
 
   #NOTIFICATION_TYPES = { SUCCESS: "success", ERROR: "error" };
 
@@ -15,7 +14,7 @@ export default class NotificationMessage {
     if (notificationType) {
       this.type = type;
     } else {
-      console.warn("Unknown notification type!");
+      console.warn("Unknown notification type! Changing to Error type");
       this.type = this.#NOTIFICATION_TYPES.ERROR;
     }
 
@@ -40,34 +39,28 @@ export default class NotificationMessage {
     this.element = htmlToElement(this.template);
   }
 
-  show(targetEl) {
-    if (NotificationMessage.isShown) {
-      NotificationMessage.activeNotification.hide();
+  show(targetEl = document.body) {
+    if (NotificationMessage.activeNotification) {
+      NotificationMessage.activeNotification.remove();
     }
-    if (targetEl) targetEl.append(this.element);
-    else document.body.append(this.element);
-    this.timer = setTimeout(() => this.hide(), this.duration);
+    targetEl.append(this.element);
+    this.timerId = setTimeout(() => this.remove(), this.duration);
 
     NotificationMessage.activeNotification = this;
-    NotificationMessage.isShown = true;
-  }
-
-  hide() {
-    this.destroy();
-    NotificationMessage.activeNotification = null;
-    NotificationMessage.isShown = false;
   }
 
   destroy() {
     this.remove();
     this.element = null;
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
+
+    NotificationMessage.activeNotification = null;
   }
 
   remove() {
+    if (this.timerId) {
+      clearTimeout(this.timerId);
+      this.timerId = null;
+    }
     if (this.element) this.element.remove();
   }
 
