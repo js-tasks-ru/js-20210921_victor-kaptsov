@@ -49,19 +49,19 @@ export default class NotificationMessage {
     NotificationMessage.activeNotification = this;
   }
 
-  destroy() {
-    this.remove();
-    this.element = null;
-
-    NotificationMessage.activeNotification = null;
-  }
-
   remove() {
     if (this.timerId) {
       clearTimeout(this.timerId);
       this.timerId = null;
     }
     if (this.element) this.element.remove();
+  }
+
+  destroy() {
+    this.remove();
+    this.element = null;
+
+    NotificationMessage.activeNotification = null;
   }
 
   _getNotificationType(searchValue) {
