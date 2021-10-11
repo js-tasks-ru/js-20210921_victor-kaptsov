@@ -20,19 +20,28 @@ export default class ColumnChart {
     value = 0,
     formatHeading = (x) => x,
   } = {}) {
-    this.getFinalHTMLString = this.#chartTemplateGenerator({
-      isLoading: isEmpty(data),
+    this.data = data;
+    this.label = label;
+    this.link = link;
+    this.value = formatHeading(value);
+
+    this.render();
+  }
+
+  render() {
+    const chartColumns = this.#chartBodyGenerator(this.data);
+
+    const chartTemplateStr = this.#chartTemplateGenerator({
+      isLoading: isEmpty(this.data),
       chartHeight: this.chartHeight,
-      labelText: label,
+      labelText: this.label,
       linkText: "View All",
-      linkHref: link,
-      value: formatHeading(value),
+      linkHref: this.link,
+      value: this.value,
+      chartColumns,
     });
 
-    const chartColumns = this.#chartBodyGenerator(data);
-    const finalHtmlString = this.getFinalHTMLString(chartColumns);
-
-    this.element = htmlToElement(finalHtmlString);
+    this.element = htmlToElement(chartTemplateStr);
     this.chartBody = this.element.querySelector(
       "." + this.#classNames.chartBody
     );
@@ -56,27 +65,24 @@ export default class ColumnChart {
     this.chartBody = null;
   }
 
-  #chartTemplateGenerator =
-    ({
-      isLoading = true,
-      chartHeight = 50,
-      labelText = "",
-      linkText = "",
-      linkHref = "",
-      value = "",
-    }) =>
-    (chartColumns) => {
-      const elementClasses = isLoading
-        ? this.#classNames.element + " " + this.#classNames.loading
-        : this.#classNames.element;
+  #chartTemplateGenerator = ({
+    isLoading = true,
+    chartHeight = 50,
+    labelText = "",
+    linkText = "",
+    linkHref = "",
+    value = "",
+    chartColumns,
+  }) => {
+    const elementClasses = isLoading
+      ? this.#classNames.element + " " + this.#classNames.loading
+      : this.#classNames.element;
 
-      const linkTag = linkHref
-        ? `<a href="${linkHref}" class="${
-            this.#classNames.link
-          }">${linkText}</a>`
-        : ``;
+    const linkTag = linkHref
+      ? `<a href="${linkHref}" class="${this.#classNames.link}">${linkText}</a>`
+      : ``;
 
-      return `
+    return `
         <div class="${elementClasses}" style="--chart-height: ${chartHeight}">
           <div class="${this.#classNames.label}">
             ${labelText}
@@ -92,10 +98,7 @@ export default class ColumnChart {
           </div>
         </div>
       `;
-    };
-
-  #chartColumnGenerator = ({ value, percent }) =>
-    `<div style="--value: ${value}" data-tooltip="${percent}%"></div>`;
+  };
 
   #chartBodyGenerator = (data) =>
     this.#getColumnProps(data).map(this.#chartColumnGenerator).join("");
@@ -110,11 +113,16 @@ export default class ColumnChart {
     }));
   };
 
+  #chartColumnGenerator = ({ value, percent }) =>
+    `<div style="--value: ${value}" data-tooltip="${percent}%"></div>`;
+
   _toggleLoader(enable) {
     if (enable) this.element.classList.add(this.#classNames.loading);
     else this.element.classList.remove(this.#classNames.loading);
   }
 }
+
+// NOTE: next functions should be in separate utilities file:
 
 function htmlToElement(html) {
   // const template = document.createElement("template");
