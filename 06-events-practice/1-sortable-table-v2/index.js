@@ -215,17 +215,6 @@ export default class SortableTable {
       (acc, el) => ({ ...acc, [el.dataset.element]: el }),
       {}
     );
-    // const accumElem = acc[elName];
-    // const elName = el.dataset.element;
-
-    // const newElement = !accumElem;
-    // if (newElement) return { ...acc, [elName]: el };
-
-    // const repeatedElement = accumElem && !(accumElem instanceof Array);
-    // if (repeatedElement) return { ...acc, [elName]: [accumElem, el] };
-
-    // const elementsGroup = accumElem && accumElem instanceof Array;
-    // if (elementsGroup) return { ...acc, [elName]: [...accumElem, el] };
   }
 
   remove() {
