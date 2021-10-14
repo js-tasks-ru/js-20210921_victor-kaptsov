@@ -143,6 +143,7 @@ export default class SortableTable {
 
     if (sortCell) {
       if (sortCell.dataset.sortable === "false") return;
+      if (!evt.currentTarget.contains(sortCell)) return;
 
       const newOrder = this.reverseSortOrder(sortCell.dataset.order);
 
