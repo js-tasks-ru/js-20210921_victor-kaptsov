@@ -6,7 +6,7 @@ class Tooltip {
   content;
   cursorShift = 10;
 
-  tooltipsMap = new Map();
+  tooltipsCache = new Map();
   tooltipActive;
 
   clientX;
@@ -16,23 +16,17 @@ class Tooltip {
     if (Tooltip.tooltip) return Tooltip.tooltip;
     Tooltip.tooltip = this;
 
-    this.onPointerOverTooltip = this.onPointerOverTooltip.bind(this);
-    this.onPointerOutTooltip = this.onPointerOutTooltip.bind(this);
+    this.onPointerOver = this.onPointerOver.bind(this);
+    this.onPointerOut = this.onPointerOut.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
   }
 
   render(content = "") {
-    // console.log("rendering tooltip from content and template");
     this.content = content;
+    this.element = this.tooltipsCache.has(content)
+      ? this.tooltipsCache.get(content)
+      : htmlToElement(this.template);
     this.element = htmlToElement(this.template);
-    this.setTooltipPosition(this.clientX, this.clientY);
-    document.body.append(this.element);
-  }
-
-  restore(content) {
-    // console.log("restoring tooltip from Map");
-    this.content = content;
-    this.element = this.tooltipsMap.get(content);
     this.setTooltipPosition(this.clientX, this.clientY);
     document.body.append(this.element);
   }
@@ -47,18 +41,18 @@ class Tooltip {
   }
 
   addListeners(container) {
-    container.addEventListener("pointerover", this.onPointerOverTooltip);
-    container.addEventListener("pointerout", this.onPointerOutTooltip);
+    container.addEventListener("pointerover", this.onPointerOver);
+    container.addEventListener("pointerout", this.onPointerOut);
     container.addEventListener("mousemove", this.onMouseMove);
   }
 
   removeListeners(container) {
-    container.removeEventListener("pointerover", this.onPointerOverTooltip);
-    container.removeEventListener("pointerout", this.onPointerOutTooltip);
+    container.removeEventListener("pointerover", this.onPointerOver);
+    container.removeEventListener("pointerout", this.onPointerOut);
     container.removeEventListener("mousemove", this.onMouseMove);
   }
 
-  onPointerOverTooltip(evt) {
+  onPointerOver(evt) {
     // console.log("over evt:", evt);
     if (!this.gotTooltip(evt.target)) return;
     // console.log("adding tooltip...");
@@ -66,12 +60,8 @@ class Tooltip {
     this.clientX = evt.clientX + this.cursorShift;
     this.clientY = evt.clientY + this.cursorShift;
 
-    const newTooltipContent = evt.target.dataset.tooltip;
-    if (this.tooltipsMap.has(newTooltipContent)) {
-      this.restore(newTooltipContent);
-    } else {
-      this.render(newTooltipContent);
-    }
+    const newTooltipContent = this.getTooltipContent(evt.target);
+    this.render(newTooltipContent);
 
     this.tooltipActive = true;
   }
@@ -81,11 +71,11 @@ class Tooltip {
     this.setTooltipPosition(evt.clientX, evt.clientY);
   }
 
-  onPointerOutTooltip(evt) {
+  onPointerOut(evt) {
     // console.log("out evt:", evt);
     if (!this.gotTooltip(evt.target)) return;
     // console.log("removing tooltip...");
-    this.tooltipsMap.set(this.content, this.element);
+    this.tooltipsCache.set(this.content, this.element);
     this.remove();
     this.tooltipActive = false;
   }
@@ -99,14 +89,19 @@ class Tooltip {
     return el.dataset && el.dataset.tooltip;
   }
 
+  getTooltipContent(el) {
+    return el.dataset.tooltip;
+  }
+
   remove() {
     if (this.element) this.element.remove();
   }
 
   destroy() {
     this.remove();
-    this.tooltipsMap.clear();
+    this.tooltipsCache.clear();
     this.removeListeners(this.container);
+    this.container = null;
     this.element = null;
   }
 }
