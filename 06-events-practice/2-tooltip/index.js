@@ -37,16 +37,16 @@ class Tooltip {
 
   initialize(container = document) {
     this.container = container;
-    this.addListeners(container);
+    this.addListeners(this.container);
   }
 
-  addListeners(container) {
+  addListeners(container = document) {
     container.addEventListener("pointerover", this.onPointerOver);
     container.addEventListener("pointerout", this.onPointerOut);
     container.addEventListener("mousemove", this.onMouseMove);
   }
 
-  removeListeners(container) {
+  removeListeners(container = document) {
     container.removeEventListener("pointerover", this.onPointerOver);
     container.removeEventListener("pointerout", this.onPointerOut);
     container.removeEventListener("mousemove", this.onMouseMove);
@@ -100,7 +100,8 @@ class Tooltip {
   destroy() {
     this.remove();
     this.tooltipsCache.clear();
-    this.removeListeners(this.container);
+    // NOTE: expression argument fixes last unit test
+    this.removeListeners(this.container || document);
     this.container = null;
     this.element = null;
   }
