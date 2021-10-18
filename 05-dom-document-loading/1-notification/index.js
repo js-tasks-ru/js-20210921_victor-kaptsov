@@ -10,7 +10,6 @@ export default class NotificationMessage {
     this.message = message;
     this.duration = duration;
     const notificationType = this._getNotificationType(type);
-    console.log("notificationType:", notificationType);
     if (notificationType) {
       this.type = type;
     } else {
