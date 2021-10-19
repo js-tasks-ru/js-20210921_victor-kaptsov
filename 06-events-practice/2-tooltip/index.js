@@ -43,7 +43,6 @@ class Tooltip {
   addListeners(container = document) {
     container.addEventListener("pointerover", this.onPointerOver);
     container.addEventListener("pointerout", this.onPointerOut);
-    container.addEventListener("mousemove", this.onMouseMove);
   }
 
   removeListeners(container = document) {
@@ -63,6 +62,7 @@ class Tooltip {
     const newTooltipContent = this.getTooltipContent(evt.target);
     this.render(newTooltipContent);
 
+    this.container.addEventListener("mousemove", this.onMouseMove);
     this.tooltipActive = true;
   }
 
@@ -77,6 +77,7 @@ class Tooltip {
     // console.log("removing tooltip...");
     this.tooltipsCache.set(this.content, this.element);
     this.remove();
+    this.container.removeEventListener("mousemove", this.onMouseMove);
     this.tooltipActive = false;
   }
 
@@ -110,9 +111,6 @@ class Tooltip {
 export default Tooltip;
 
 function htmlToElement(html) {
-  // const template = document.createElement("template");
-  // template.innerHTML = html.trim();
-  // return template.content.firstChild;
   const div = document.createElement("div");
   div.insertAdjacentHTML("afterbegin", html.trim());
   return div.firstChild;
