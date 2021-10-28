@@ -1,4 +1,4 @@
-import SortableTable from '../solution/index.js';
+import SortableTable from './index.js'
 
 import { products, bestsellers } from './__mocks__/products-data.js';
 
@@ -88,9 +88,9 @@ describe('async-code-fetch-api-part-1/sortable-table-v3', () => {
 
     const { body } = sortableTable.subElements;
 
-    expect(body.children.length).toEqual(3);
+    expect(body.children[0].children.length).toEqual(3);
 
-    const [row1, row2, row3] = body.children;
+    const [row1, row2, row3] = body.children[0].children;
 
     expect(row1).toHaveTextContent('10.5\" Планшет Apple iPad Pro Wi-Fi+Cellular 64 ГБ , LTE серый');
     expect(row2).toHaveTextContent('13.3\" Рюкзак XD Design Bobby Hero Small серый');
