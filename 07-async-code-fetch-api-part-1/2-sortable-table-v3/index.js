@@ -197,8 +197,8 @@ export default class SortableTable {
     const sortCell = evt.target.closest('[data-sortable]');
 
     if (sortCell) {
-      if (sortCell.dataset.sortable === 'false') { return; }
-      if (!evt.currentTarget.contains(sortCell)) { return; }
+      if (sortCell.dataset.sortable === 'false') return;
+      if (!evt.currentTarget.contains(sortCell)) return;
 
       const newOrder = this.reverseSortOrder(sortCell.dataset.order);
 
@@ -334,7 +334,7 @@ export default class SortableTable {
   }
 
   remove () {
-    if (this.element) { this.element.remove(); }
+    if (this.element) this.element.remove();
   }
 
   destroy () {
