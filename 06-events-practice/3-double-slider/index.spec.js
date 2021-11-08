@@ -86,7 +86,7 @@ describe('events-practice/double-slider', () => {
     leftSlider.dispatchEvent(down);
     leftSlider.dispatchEvent(move);
 
-    expect(leftBoundary).toHaveTextContent(doubleSlider.min);
+    expect(leftBoundary).toHaveTextContent('$' + doubleSlider.min);
   });
 
   it('should have ability to move right slider to end boundary', () => {
@@ -105,7 +105,7 @@ describe('events-practice/double-slider', () => {
     rightSlider.dispatchEvent(down);
     rightSlider.dispatchEvent(move);
 
-    expect(rightBoundary).toHaveTextContent(doubleSlider.max);
+    expect(rightBoundary).toHaveTextContent('$' + doubleSlider.max);
   });
 
   it('should have ability to select all range', () => {
@@ -134,8 +134,8 @@ describe('events-practice/double-slider', () => {
     rightSlider.dispatchEvent(down);
     rightSlider.dispatchEvent(moveRight);
 
-    expect(leftBoundary).toHaveTextContent(doubleSlider.min);
-    expect(rightBoundary).toHaveTextContent(doubleSlider.max);
+    expect(leftBoundary).toHaveTextContent('$' + doubleSlider.min);
+    expect(rightBoundary).toHaveTextContent('$' + doubleSlider.max);
   });
 
   it('should have ability to select single value (when min and max range equal)', () => {
@@ -207,7 +207,7 @@ describe('events-practice/double-slider', () => {
     });
 
     const move = new MouseEvent('pointermove', {
-      clientX: 300,
+      clientX: 100,
       bubbles: true
     });
 

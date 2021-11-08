@@ -6,12 +6,13 @@ export default class SortableTable {
 
   constructor(
     headerConfig,
-    { data = [], sorted = {} } = {},
+    { data = [], sorted = {}, url = "" } = {},
     isSortLocally = true
   ) {
     this.headerConfig = headerConfig;
     this.data = Array.isArray(data) ? data : data.data;
     this.sorted = sorted;
+    this.url = url;
 
     this.isSortLocally = isSortLocally;
     this.onHeaderClick = this.onHeaderClick.bind(this);
