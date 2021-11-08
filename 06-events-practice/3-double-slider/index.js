@@ -10,6 +10,129 @@ export default class DoubleSlider {
   selectionBoundaryLeft;
   selectionBoundaryRight;
 
+
+  _prepareThumbDrag = (evt) => {
+    document.addEventListener("pointermove", this._dragThumb);
+    document.addEventListener("pointerup", this._dropThumb);
+
+    // NOTE: get DOM elements sizes, if none
+    if (!this.pBarWidthAbs) {
+      const progressBarStyles = this.subElements.inner.getBoundingClientRect();
+
+      this.pBarWidthAbs = progressBarStyles.width;
+      this.pBarBoundaryLeftAbs = progressBarStyles.x;
+      this.pBarBoundaryRightAbs = progressBarStyles.x + progressBarStyles.width;
+
+      this.pixelsInPercent = this.pBarWidthAbs / 100;
+    }
+
+    const draggedThumbStyles = evt.currentTarget.style;
+    this.draggedThumb = {
+      el: evt.currentTarget,
+      // TODO: next two checks is based on layout styles, not very reliable!
+      side: draggedThumbStyles.left ? "left" : "right",
+      posPercent: draggedThumbStyles.left
+        ? parseFloat(draggedThumbStyles.left)
+        : parseFloat(draggedThumbStyles.right),
+      posAbs: evt.currentTarget.getBoundingClientRect().x || 0,
+    };
+  };
+
+  _dragThumb = (evt) => {
+    if (!this.draggedThumb) return;
+    if (!this.subElements) return;
+
+    let newX = evt.clientX;
+    if (newX < this.pBarBoundaryLeftAbs) newX = this.pBarBoundaryLeftAbs;
+    if (newX > this.pBarBoundaryRightAbs) newX = this.pBarBoundaryRightAbs;
+
+    const horizontalDragAmount = newX - this.draggedThumb.posAbs;
+    const dragAmountPercent = parseFloat(
+      horizontalDragAmount / this.pixelsInPercent
+    );
+
+    // Note: fix for unit test #4
+    if (newX === 0) this.draggedThumb.posPercent = 0;
+
+    switch (this.draggedThumb.side) {
+      case "left":
+        this._dragLeft(dragAmountPercent)
+        break;
+      case "right":
+        this._dragRight(dragAmountPercent)
+    }
+
+    this.draggedThumb.posAbs = newX;
+  };
+
+  _dragLeft = (dragAmountPercent) => {
+    // Update draggedThumb object saved position:
+    this.draggedThumb.posPercent += dragAmountPercent;
+
+    // Note: fix thumbs overflows
+    this.selectionBoundaryLeft = Math.floor(this.draggedThumb.posPercent);
+    if (this.selectionBoundaryLeft < 0) {
+      this.selectionBoundaryLeft = 0;
+      this.draggedThumb.posPercent = this.selectionBoundaryLeft;
+    } else if (
+      this.selectionBoundaryLeft >
+      100 - this.selectionBoundaryRight
+    ) {
+      this.selectionBoundaryLeft = 100 - this.selectionBoundaryRight;
+      this.draggedThumb.posPercent = this.selectionBoundaryLeft;
+    }
+
+    // Update selected minimum value in DOM:
+    this.selected.from =
+      this.min + this.selectionBoundaryLeft * this.progressPercent;
+    this.subElements.from.textContent = this.formatValue(
+      this.selected.from
+    );
+
+    // Update selection in DOM:
+    const newLeftPosition = this.draggedThumb.posPercent + "%";
+    this.draggedThumb.el.style.left = newLeftPosition;
+    this.subElements.progress.style.left = newLeftPosition;
+  }
+
+  _dragRight = (dragAmountPercent) => {
+    // Update draggedThumb object saved position:
+    this.draggedThumb.posPercent -= dragAmountPercent;
+
+    // Note: fix thumbs overflows
+    this.selectionBoundaryRight = Math.ceil(this.draggedThumb.posPercent);
+    if (this.selectionBoundaryRight < 0) {
+      this.selectionBoundaryRight = 0;
+      this.draggedThumb.posPercent = 0;
+    } else if (
+      this.selectionBoundaryRight >
+      100 - this.selectionBoundaryLeft
+    ) {
+      this.selectionBoundaryRight = 100 - this.selectionBoundaryLeft;
+      this.draggedThumb.posPercent = this.selectionBoundaryRight;
+    }
+
+    // Update selected maximum value in DOM:
+    this.selected.to =
+      this.min + (100 - this.selectionBoundaryRight) * this.progressPercent;
+    this.subElements.to.textContent = this.formatValue(this.selected.to);
+
+    // Update selection in DOM:
+    const newRightPosition = this.draggedThumb.posPercent + "%";
+    this.draggedThumb.el.style.right = newRightPosition;
+    this.subElements.progress.style.right = newRightPosition;
+  }
+
+  _dropThumb = () => {
+    document.removeEventListener("pointermove", this._dragThumb);
+    document.removeEventListener("pointerup", this._dropThumb);
+
+    if (!this.draggedThumb) return;
+
+    this.draggedThumb = null;
+    this.dispatchRangeSelect();
+  };
+
   constructor({
     min = 0,
     max = 100,
@@ -96,125 +219,6 @@ export default class DoubleSlider {
     }
   }
 
-  _prepareThumbDrag = (evt) => {
-    // console.log("_prepareThumbDrag()");
-
-    document.addEventListener("pointermove", this._dragThumb);
-    document.addEventListener("pointerup", this._dropThumb);
-
-    // NOTE: get DOM elements sizes, if none
-    if (!this.pBarWidthAbs) {
-      const progressBarStyles = this.subElements.inner.getBoundingClientRect();
-
-      this.pBarWidthAbs = progressBarStyles.width;
-      this.pBarBoundaryLeftAbs = progressBarStyles.x;
-      this.pBarBoundaryRightAbs = progressBarStyles.x + progressBarStyles.width;
-
-      this.pixelsInPercent = this.pBarWidthAbs / 100;
-    }
-
-    const draggedThumbStyles = evt.currentTarget.style;
-    this.draggedThumb = {
-      el: evt.currentTarget,
-      // TODO: next two checks is based on layout styles, not very reliable!
-      side: draggedThumbStyles.left ? "left" : "right",
-      posPercent: draggedThumbStyles.left
-        ? parseFloat(draggedThumbStyles.left)
-        : parseFloat(draggedThumbStyles.right),
-      posAbs: evt.currentTarget.getBoundingClientRect().x || 0,
-    };
-  };
-
-  _dragThumb = (evt) => {
-    // console.log("_dragThumb()");
-    if (!this.draggedThumb) return;
-    if (!this.subElements) return;
-
-    let newX = evt.clientX;
-    if (newX < this.pBarBoundaryLeftAbs) newX = this.pBarBoundaryLeftAbs;
-    if (newX > this.pBarBoundaryRightAbs) newX = this.pBarBoundaryRightAbs;
-
-    const horizontalDragAmount = newX - this.draggedThumb.posAbs;
-    const dragInPercents = parseFloat(
-      horizontalDragAmount / this.pixelsInPercent
-    );
-
-    // Note: fix for unit test #4
-    if (newX === 0) this.draggedThumb.posPercent = 0;
-
-    switch (this.draggedThumb.side) {
-      case "left":
-        // Update draggedThumb object saved position:
-        this.draggedThumb.posPercent += dragInPercents;
-
-        // Note: fix thumbs overflows
-        this.selectionBoundaryLeft = Math.floor(this.draggedThumb.posPercent);
-        if (this.selectionBoundaryLeft < 0) {
-          this.selectionBoundaryLeft = 0;
-          this.draggedThumb.posPercent = this.selectionBoundaryLeft;
-        } else if (
-          this.selectionBoundaryLeft >
-          100 - this.selectionBoundaryRight
-        ) {
-          this.selectionBoundaryLeft = 100 - this.selectionBoundaryRight;
-          this.draggedThumb.posPercent = this.selectionBoundaryLeft;
-        }
-
-        // Update selected minimum value in DOM:
-        this.selected.from =
-          this.min + this.selectionBoundaryLeft * this.progressPercent;
-        this.subElements.from.textContent = this.formatValue(
-          this.selected.from
-        );
-
-        // Update selection in DOM:
-        const newLeftPosition = this.draggedThumb.posPercent + "%";
-        this.draggedThumb.el.style.left = newLeftPosition;
-        this.subElements.progress.style.left = newLeftPosition;
-
-        break;
-      case "right":
-        // Update draggedThumb object saved position:
-        this.draggedThumb.posPercent -= dragInPercents;
-
-        // Note: fix thumbs overflows
-        this.selectionBoundaryRight = Math.ceil(this.draggedThumb.posPercent);
-        if (this.selectionBoundaryRight < 0) {
-          this.selectionBoundaryRight = 0;
-          this.draggedThumb.posPercent = 0;
-        } else if (
-          this.selectionBoundaryRight >
-          100 - this.selectionBoundaryLeft
-        ) {
-          this.selectionBoundaryRight = 100 - this.selectionBoundaryLeft;
-          this.draggedThumb.posPercent = this.selectionBoundaryRight;
-        }
-
-        // Update selected maximum value in DOM:
-        this.selected.to =
-          this.min + (100 - this.selectionBoundaryRight) * this.progressPercent;
-        this.subElements.to.textContent = this.formatValue(this.selected.to);
-
-        // Update selection in DOM:
-        const newRightPosition = this.draggedThumb.posPercent + "%";
-        this.draggedThumb.el.style.right = newRightPosition;
-        this.subElements.progress.style.right = newRightPosition;
-    }
-
-    this.draggedThumb.posAbs = newX;
-  };
-
-  _dropThumb = () => {
-    // console.log("_dropThumb()");
-
-    document.removeEventListener("pointermove", this._dragThumb);
-    document.removeEventListener("pointerup", this._dropThumb);
-
-    if (!this.draggedThumb) return;
-
-    this.draggedThumb = null;
-    this.dispatchRangeSelect();
-  };
 
   getSubElements(element = document) {
     const subElementsNodeList = element.querySelectorAll("[data-element]");
